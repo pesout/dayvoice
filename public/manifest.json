@@ -1,0 +1,16 @@
+{
+  "name": "Dayvoice",
+  "short_name": "Dayvoice",
+  "description": "Tvůj den, tvůj hlas.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FFFFFF",
+  "theme_color": "#A78BFA",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64",
+      "type": "image/x-icon"
+    }
+  ]
+}

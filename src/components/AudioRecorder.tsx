@@ -116,7 +116,7 @@ export function AudioRecorder() {
     <div className="flex flex-col items-center justify-center flex-1 gap-6">
       <button
         onClick={handleMicClick}
-        disabled={state === "processing"}
+        disabled={false}
         className={`w-32 h-32 rounded-full flex items-center justify-center transition-all duration-200 ease-smooth ${
           state === "recording"
             ? "bg-destructive shadow-mic-active animate-recording-pulse"
