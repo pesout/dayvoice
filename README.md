@@ -1,8 +1,8 @@
 # Dayvoice
 
-Mobilní PWA pro hlasové poznámky s automatickým AI přepisem, chytrým shrnutím a denními přehledy.
+**Projekt vytvořený jako ukázka v rámci předmětu Generativní AI na KII PEF ČZU**
 
-**Tvůj den, tvůj hlas.**
+Mobilní PWA pro hlasové poznámky s automatickým AI přepisem, chytrým shrnutím a denními přehledy.
 
 ## Hlavni funkce
 
