@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { Logo } from "@/components/Logo";
 import { Loader2 } from "lucide-react";
+import { api } from "@/lib/api";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -11,7 +12,7 @@ export default function LoginPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const errs: Record<string, string> = {};
     if (!form.email.trim()) errs.email = "Vyplň email";
@@ -22,11 +23,15 @@ export default function LoginPage() {
     }
     setErrors({});
     setLoading(true);
-    // TODO: napojit na API (POST /auth/login)
-    setTimeout(() => {
-      localStorage.setItem("isAuthenticated", "true");
+    try {
+      await api.login(form.email, form.password);
       navigate("/");
-    }, 800);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Přihlášení se nezdařilo";
+      setErrors({ form: message });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const set = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) =>
@@ -48,6 +53,11 @@ export default function LoginPage() {
 
         <div className="bg-background rounded-2xl shadow-surface p-6">
           <h2 className="text-xl font-semibold text-foreground mb-6">Přihlas se</h2>
+          {errors.form && (
+            <div className="bg-destructive/10 text-destructive rounded-xl px-4 py-3 text-sm mb-4 text-center">
+              {errors.form}
+            </div>
+          )}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <input

@@ -1,4 +1,4 @@
-import type { Digest } from "@/mocks/data";
+import type { Digest } from "@/lib/api";
 
 interface DigestCardProps {
   digest: Digest;

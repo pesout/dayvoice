@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { Mic, Square, MicOff, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { api } from "@/lib/api";
 
 type RecorderState = "idle" | "recording" | "processing" | "error";
 
@@ -18,7 +19,24 @@ export function AudioRecorder() {
   const [elapsed, setElapsed] = useState(0);
   const mediaRecorder = useRef<MediaRecorder | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const elapsedRef = useRef(0);
   const navigate = useNavigate();
+
+  const processRecording = useCallback(
+    async (audioBlob: Blob, durationSeconds: number) => {
+      setState("processing");
+      setElapsed(0);
+      try {
+        const recording = await api.uploadRecording(audioBlob, durationSeconds);
+        navigate(`/recordings/${recording.id}`);
+      } catch {
+        toast.error("Zpracování se nezdařilo. Zkus to znovu.");
+        setState("idle");
+      }
+    },
+    [navigate],
+  );
 
   const stopRecording = useCallback(() => {
     mediaRecorder.current?.stop();
@@ -28,43 +46,43 @@ export function AudioRecorder() {
     timerRef.current = null;
   }, []);
 
-  const handleProcess = useCallback(() => {
-    setState("processing");
-    setElapsed(0);
-    // TODO: napojit na API (POST /recordings — odeslání audio souboru)
-    setTimeout(() => {
-      navigate("/recordings/rec-1");
-    }, 2000);
-  }, [navigate]);
-
   const startRecording = useCallback(async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const recorder = new MediaRecorder(stream, { mimeType: "audio/webm" });
       mediaRecorder.current = recorder;
+      chunksRef.current = [];
+      elapsedRef.current = 0;
+
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunksRef.current.push(e.data);
+      };
+
+      recorder.onstop = () => {
+        const audioBlob = new Blob(chunksRef.current, { type: "audio/webm" });
+        processRecording(audioBlob, elapsedRef.current);
+      };
+
       recorder.start();
       setState("recording");
       setElapsed(0);
 
       timerRef.current = setInterval(() => {
         setElapsed((prev) => {
-          if (prev + 1 >= MAX_DURATION) {
+          const next = prev + 1;
+          elapsedRef.current = next;
+          if (next >= MAX_DURATION) {
             stopRecording();
-            handleProcess();
             toast("Nahrávka dosáhla maximální délky 30 minut a byla automaticky ukončena.");
             return 0;
           }
-          return prev + 1;
+          return next;
         });
       }, 1000);
-
-      recorder.onstop = () => {
-        handleProcess();
-      };
     } catch {
       setState("error");
     }
-  }, [stopRecording, handleProcess]);
+  }, [stopRecording, processRecording]);
 
   const handleMicClick = useCallback(() => {
     if (state === "idle" || state === "error") {

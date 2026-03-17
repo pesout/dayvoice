@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ChevronLeft, Play, FileText, Sparkles } from "lucide-react";
-import { mockRecordings } from "@/mocks/data";
+import { ChevronLeft, Play, FileText, Sparkles, Loader2 } from "lucide-react";
+import { api, type Recording } from "@/lib/api";
 import { TabSwitcher, type TabItem } from "@/components/TabSwitcher";
 import { TodoList } from "@/components/TodoList";
 import { BottomNav } from "@/components/BottomNav";
@@ -31,9 +31,25 @@ export default function RecordingDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("audio");
+  const [recording, setRecording] = useState<Recording | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  // TODO: napojit na API (GET /recordings/:id)
-  const recording = mockRecordings.find((r) => r.id === id);
+  useEffect(() => {
+    if (!id) return;
+    api
+      .getRecording(id)
+      .then(setRecording)
+      .catch(() => setRecording(null))
+      .finally(() => setLoading(false));
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 size={32} className="text-primary animate-spin" />
+      </div>
+    );
+  }
 
   if (!recording) {
     return (

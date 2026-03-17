@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { Logo } from "@/components/Logo";
 import { Loader2 } from "lucide-react";
 import { z } from "zod";
+import { api } from "@/lib/api";
 
 const schema = z.object({
   email: z.string().trim().email("Zadej platný email"),
@@ -19,7 +20,7 @@ export default function RegisterPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const result = schema.safeParse(form);
     if (!result.success) {
@@ -32,10 +33,15 @@ export default function RegisterPage() {
     }
     setErrors({});
     setLoading(true);
-    // TODO: napojit na API (POST /auth/register)
-    setTimeout(() => {
+    try {
+      await api.register(form.email, form.password);
       navigate("/login", { state: { flash: "Registrace proběhla úspěšně. Teď se přihlas." } });
-    }, 1000);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Registrace se nezdařila";
+      setErrors({ form: message });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const set = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) =>
@@ -51,6 +57,11 @@ export default function RegisterPage() {
 
         <div className="bg-background rounded-2xl shadow-surface p-6">
           <h2 className="text-xl font-semibold text-foreground mb-6">Vytvoř si účet</h2>
+          {errors.form && (
+            <div className="bg-destructive/10 text-destructive rounded-xl px-4 py-3 text-sm mb-4 text-center">
+              {errors.form}
+            </div>
+          )}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <input

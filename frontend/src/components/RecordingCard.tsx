@@ -1,5 +1,5 @@
 import { Trash2 } from "lucide-react";
-import type { Recording } from "@/mocks/data";
+import type { Recording } from "@/lib/api";
 
 interface RecordingCardProps {
   recording: Recording;

@@ -2,6 +2,11 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { AuthModule } from './auth/auth.module';
+import { UsersModule } from './users/users.module';
+import { RecordingsModule } from './recordings/recordings.module';
+import { DigestsModule } from './digests/digests.module';
+import { OpenaiModule } from './openai/openai.module';
 
 @Module({
   imports: [
@@ -20,9 +25,14 @@ import { TypeOrmModule } from '@nestjs/typeorm';
         password: configService.get<string>('DB_PASSWORD', ''),
         database: configService.get<string>('DB_DATABASE', ''),
         autoLoadEntities: true,
-        synchronize: false,
+        synchronize: true,
       }),
     }),
+    AuthModule,
+    UsersModule,
+    RecordingsModule,
+    DigestsModule,
+    OpenaiModule,
   ],
 })
 export class AppModule {}

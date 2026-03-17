@@ -1,6 +1,7 @@
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ChevronLeft } from "lucide-react";
-import { mockDigests } from "@/mocks/data";
+import { ChevronLeft, Loader2 } from "lucide-react";
+import { api, type Digest } from "@/lib/api";
 import { TodoList } from "@/components/TodoList";
 import { BottomNav } from "@/components/BottomNav";
 
@@ -16,9 +17,25 @@ function formatDateLong(dateStr: string) {
 export default function DigestDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [digest, setDigest] = useState<Digest | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  // TODO: napojit na API (GET /digests/:id)
-  const digest = mockDigests.find((d) => d.id === id);
+  useEffect(() => {
+    if (!id) return;
+    api
+      .getDigest(id)
+      .then(setDigest)
+      .catch(() => setDigest(null))
+      .finally(() => setLoading(false));
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 size={32} className="text-primary animate-spin" />
+      </div>
+    );
+  }
 
   if (!digest) {
     return (

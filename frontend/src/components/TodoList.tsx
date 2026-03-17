@@ -1,4 +1,4 @@
-import type { Todo } from "@/mocks/data";
+import type { Todo } from "@/lib/api";
 import { useLocalStorageTodos } from "@/hooks/useLocalStorageTodos";
 
 interface TodoListProps {

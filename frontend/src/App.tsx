@@ -14,14 +14,14 @@ import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
 function AuthGuard({ children }: { children: React.ReactNode }) {
-  const isAuth = localStorage.getItem("isAuthenticated") === "true";
+  const isAuth = !!localStorage.getItem("token");
   const location = useLocation();
   if (!isAuth) return <Navigate to="/login" state={{ from: location }} replace />;
   return <>{children}</>;
 }
 
 function PublicRoute({ children }: { children: React.ReactNode }) {
-  const isAuth = localStorage.getItem("isAuthenticated") === "true";
+  const isAuth = !!localStorage.getItem("token");
   if (isAuth) return <Navigate to="/" replace />;
   return <>{children}</>;
 }
