@@ -3,10 +3,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Recording } from '../entities/recording.entity';
 import { RecordingsController } from './recordings.controller';
 import { RecordingsService } from './recordings.service';
-import { OpenaiModule } from '../openai/openai.module';
+import { LlmModule } from '../llm/llm.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Recording]), OpenaiModule],
+  imports: [TypeOrmModule.forFeature([Recording]), LlmModule],
   controllers: [RecordingsController],
   providers: [RecordingsService],
   exports: [RecordingsService],

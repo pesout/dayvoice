@@ -31,14 +31,16 @@ backend/src/
 ├── recordings/                # Recordings module
 │   ├── recordings.module.ts
 │   ├── recordings.controller.ts  # CRUD + audio streaming
-│   └── recordings.service.ts     # File save, OpenAI processing, CRUD
+│   └── recordings.service.ts     # File save, LLM processing, CRUD
 ├── digests/                   # Digests module
 │   ├── digests.module.ts
 │   ├── digests.controller.ts  # GET list + detail
 │   └── digests.service.ts     # CRON job, daily digest generation
-└── openai/                    # OpenAI integration module
-    ├── openai.module.ts
-    └── openai.service.ts      # transcribe (Whisper), generateSummary (GPT), generateDailyDigest (GPT)
+└── llm/                       # LLM abstraction layer (provider-agnostic)
+    ├── llm.service.ts         # Abstract LlmService class + SummaryResult type
+    ├── llm.module.ts          # Module that binds LlmService to a provider
+    └── providers/
+        └── openai-llm.service.ts  # OpenAI implementation (Whisper + GPT)
 ```
 
 ---
@@ -92,12 +94,25 @@ npm run start:prod        # Run compiled app from dist/
 
 ---
 
-## OpenAI integration
+## LLM abstraction layer
 
-- **Whisper**: Transcribes audio file to Czech text. Uses `createReadStream` on the saved file.
-- **GPT**: Takes transcript, returns JSON `{ summary, todos }` using `response_format: { type: 'json_object' }`.
-- **Daily digest**: Combines all transcripts from a day, generates a single summary + TODO list.
-- Model names configurable via `WHISPER_MODEL` and `GPT_MODEL` env vars.
+All AI/LLM calls go through the abstract `LlmService` class (`llm/llm.service.ts`). The rest of the application never imports the OpenAI SDK directly.
+
+**Architecture:**
+- `LlmService` — abstract class with three methods: `transcribe()`, `generateSummary()`, `generateDailyDigest()`. Also exports the `SummaryResult` type.
+- `LlmModule` — binds `LlmService` to a concrete provider via `{ provide: LlmService, useClass: OpenaiLlmService }`.
+- `providers/openai-llm.service.ts` — OpenAI implementation (Whisper for transcription, GPT for summaries).
+
+**Swapping providers:** To replace OpenAI with another LLM provider, create a new class extending `LlmService` in `llm/providers/` and change `useClass` in `llm/llm.module.ts`. No other files need to change.
+
+**Configuration (env vars):**
+- `OPENAI_API_KEY` — API key for OpenAI provider.
+- `WHISPER_MODEL` — Whisper model name (default: `whisper-1`).
+- `GPT_MODEL` — GPT model name (default: `gpt-4o`).
+- `LLM_TEMPERATURE` — Temperature for text generation (default: `0.3`).
+- `LLM_MAX_TOKENS` — Max tokens for LLM responses (default: `1024`).
+
+**Error handling:** Each method in `OpenaiLlmService` catches API errors, logs them via NestJS `Logger`, and re-throws with a descriptive message. Callers (recordings, digests) catch these and fall back to default text.
 
 ---
 
@@ -118,7 +133,7 @@ npm run start:prod        # Run compiled app from dist/
 - `NotFoundException` for missing resources (Czech messages).
 - `ConflictException` for duplicate email registration.
 - `UnauthorizedException` for wrong credentials.
-- OpenAI failures: logged, recording saved with fallback text "Zpracování se nezdařilo."
+- LLM failures: logged, recording saved with fallback text "Zpracování se nezdařilo."
 
 ---
 
@@ -151,13 +166,13 @@ npm run start:prod        # Run compiled app from dist/
 - **Keep services focused.** If a service grows beyond ~200 lines, consider splitting it.
 - **DTOs for all input.** Even simple endpoints benefit from explicit DTO classes for documentation and validation.
 - **Explicit typing.** Avoid `any` where possible. Use `unknown` with type guards when dealing with external data (API responses, parsed JSON).
-- **Graceful degradation for OpenAI.** If the API is unreachable, the recording should still be saved with empty transcript and a fallback summary message.
+- **Graceful degradation for LLM.** If the API is unreachable, the recording should still be saved with empty transcript and a fallback summary message.
 
 ---
 
 ## Key design decisions
 
-- **Synchronous AI processing**: Recording upload waits for Whisper + GPT to complete before responding. This keeps the frontend simple (no polling) at the cost of slower upload response.
+- **Synchronous AI processing**: Recording upload waits for LLM service (transcription + summary) to complete before responding. This keeps the frontend simple (no polling) at the cost of slower upload response.
 - **No migrations in MVP**: `synchronize: true` handles schema updates. Switch to migrations before production.
 - **Audio endpoint without auth**: `<audio>` elements can't send JWT headers. UUID in the URL provides sufficient security for MVP.
 - **Flat module structure**: Each domain has its own folder under `src/`. No deeply nested hierarchy.

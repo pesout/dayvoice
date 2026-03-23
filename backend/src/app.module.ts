@@ -6,7 +6,7 @@ import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { RecordingsModule } from './recordings/recordings.module';
 import { DigestsModule } from './digests/digests.module';
-import { OpenaiModule } from './openai/openai.module';
+import { LlmModule } from './llm/llm.module';
 
 @Module({
   imports: [
@@ -32,7 +32,7 @@ import { OpenaiModule } from './openai/openai.module';
     UsersModule,
     RecordingsModule,
     DigestsModule,
-    OpenaiModule,
+    LlmModule,
   ],
 })
 export class AppModule {}

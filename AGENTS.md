@@ -25,7 +25,8 @@ This file provides concrete, copy-pastable instructions for AI coding agents and
 │   │   ├── users/         # User entity and service
 │   │   ├── recordings/    # Recording CRUD, file upload, AI processing
 │   │   ├── digests/       # Daily digest CRUD, CRON generation
-│   │   ├── openai/        # OpenAI integration (Whisper + GPT)
+│   │   ├── llm/           # LLM abstraction layer (provider-agnostic)
+│   │   │   ├── providers/ # Provider implementations (OpenAI, etc.)
 │   │   ├── entities/      # TypeORM entities (User, Recording, Digest)
 │   │   ├── app.module.ts  # Root module
 │   │   └── main.ts        # Bootstrap
@@ -44,7 +45,7 @@ This file provides concrete, copy-pastable instructions for AI coding agents and
 Prerequisites:
 - Node.js 20+
 - MySQL server running locally
-- OpenAI API key (for AI features)
+- OpenAI API key (or another LLM provider key, for AI features)
 
 ```bash
 # 1. Create the MySQL database
@@ -94,8 +95,8 @@ npm run test              # Vitest unit tests
 
 1. User records audio in browser (MediaRecorder API, webm format)
 2. Frontend sends audio blob to `POST /api/recordings` (multipart/form-data)
-3. Backend saves file to disk, calls OpenAI Whisper for transcription
-4. Backend sends transcript to OpenAI GPT for summary + TODO extraction
+3. Backend saves file to disk, calls LLM service for transcription (default: OpenAI Whisper)
+4. Backend sends transcript to LLM service for summary + TODO extraction (default: OpenAI GPT)
 5. Complete recording (with transcript, summary, todos) returned to frontend
 6. Daily CRON job generates digest from all recordings of the previous day
 
@@ -135,6 +136,8 @@ Template at `backend/.env.example`. Never commit `.env` files.
 | `OPENAI_API_KEY` | Yes | OpenAI API key for Whisper + GPT |
 | `WHISPER_MODEL` | No | Whisper model name (default: `whisper-1`) |
 | `GPT_MODEL` | No | GPT model name (default: `gpt-4o`) |
+| `LLM_TEMPERATURE` | No | LLM temperature for text generation (default: `0.3`) |
+| `LLM_MAX_TOKENS` | No | Max tokens for LLM responses (default: `1024`) |
 | `DAILY_DIGEST_CRON_HOUR` | No | Time for daily digest generation (default: `04:00`) |
 | `UPLOAD_DIR` | No | Path for audio file storage (default: `./uploads`) |
 
@@ -251,9 +254,9 @@ mysql -u <user> -p -e "CREATE DATABASE IF NOT EXISTS dayvoice;"
 
 The Vite dev server proxies `/api` to `http://localhost:3000`. Ensure the backend is running first.
 
-### OpenAI API errors
+### LLM / OpenAI API errors
 
-Ensure `OPENAI_API_KEY` is set in `backend/.env`. Without it, recording upload will fail at the transcription step (audio file is still saved).
+Ensure `OPENAI_API_KEY` is set in `backend/.env`. Without it, recording upload will fail at the transcription step (audio file is still saved). To switch LLM providers, change the `useClass` binding in `backend/src/llm/llm.module.ts`.
 
 ---
 

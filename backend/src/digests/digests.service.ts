@@ -11,7 +11,7 @@ import { SchedulerRegistry } from '@nestjs/schedule';
 import { CronJob } from 'cron';
 import { Digest } from '../entities/digest.entity';
 import { Recording } from '../entities/recording.entity';
-import { OpenaiService } from '../openai/openai.service';
+import { LlmService } from '../llm/llm.service';
 
 const DAY_NAMES = [
   'Neděle',
@@ -32,7 +32,7 @@ export class DigestsService implements OnModuleInit {
     private digestsRepo: Repository<Digest>,
     @InjectRepository(Recording)
     private recordingsRepo: Repository<Recording>,
-    private openaiService: OpenaiService,
+    private llmService: LlmService,
     private configService: ConfigService,
     private schedulerRegistry: SchedulerRegistry,
   ) {}
@@ -94,7 +94,7 @@ export class DigestsService implements OnModuleInit {
 
       try {
         const { summary, todos } =
-          await this.openaiService.generateDailyDigest(transcripts);
+          await this.llmService.generateDailyDigest(transcripts);
         const digest = this.digestsRepo.create({
           userId,
           date: dateStr,

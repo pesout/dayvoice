@@ -5,7 +5,7 @@ import { ConfigService } from '@nestjs/config';
 import * as path from 'path';
 import * as fs from 'fs';
 import { Recording } from '../entities/recording.entity';
-import { OpenaiService } from '../openai/openai.service';
+import { LlmService } from '../llm/llm.service';
 
 @Injectable()
 export class RecordingsService {
@@ -16,7 +16,7 @@ export class RecordingsService {
     @InjectRepository(Recording)
     private recordingsRepo: Repository<Recording>,
     private configService: ConfigService,
-    private openaiService: OpenaiService,
+    private llmService: LlmService,
   ) {
     this.uploadDir = this.configService.get<string>(
       'UPLOAD_DIR',
@@ -42,8 +42,8 @@ export class RecordingsService {
     let todos: { id: string; text: string }[] = [];
 
     try {
-      transcript = await this.openaiService.transcribe(filePath);
-      const result = await this.openaiService.generateSummary(transcript);
+      transcript = await this.llmService.transcribe(filePath);
+      const result = await this.llmService.generateSummary(transcript);
       summary = result.summary;
       todos = result.todos;
     } catch (err: unknown) {
