@@ -23,13 +23,13 @@ export class Recording {
   @Column()
   audioPath: string;
 
-  @Column({ type: 'text', default: '' })
+  @Column({ type: 'text', nullable: true })
   transcript: string;
 
-  @Column({ type: 'text', default: '' })
+  @Column({ type: 'text', nullable: true })
   summary: string;
 
-  @Column({ type: 'json', default: '[]' })
+  @Column({ type: 'json', nullable: true })
   todos: { id: string; text: string }[];
 
   @Column({ default: 0 })

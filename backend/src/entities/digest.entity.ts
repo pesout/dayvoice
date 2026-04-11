@@ -29,10 +29,10 @@ export class Digest {
   @Column({ type: 'text' })
   summary: string;
 
-  @Column({ type: 'json', default: '[]' })
+  @Column({ type: 'json', nullable: true })
   todos: { id: string; text: string }[];
 
-  @Column({ type: 'json', default: '[]' })
+  @Column({ type: 'json', nullable: true })
   recordingIds: string[];
 
   @CreateDateColumn()
